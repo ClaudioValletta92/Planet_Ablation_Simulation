@@ -3,9 +3,18 @@ using namespace std							//usual declaration in c++
 #include <iostream>
 #include <fstream>
 #include <cmath>
-
+/*in this program I compute the ablation of a planetesimal due to gas drag of the planet atmosphere. the atmosphere is divided in layers, each layer with its own thermodynamical quantities. In the first section we take the value of the layers from a file and put it into an array. In the second section we compute where the planetesimal is. In the third section we compute the motion of the planetesimal and the ablation by the atmosphere with the functions and classes defined in the included file. Finally we see if we can exit from the code that happens if
+-the planetesimal is completely ablated
+-the planetesimal is broken
+-the planetesimal reached the core
+-the planetesimal is in a loop completely contained in the innermost layer of the atmosphere
+What do I mean by loop? the planetesimal can be stuck in a loop with the radius going up and down and if the ablation is too slow the computational time is too long, so if the loop is completely contained in the innermost layer we exit from the program and say that all the planetesimal is ablated in the innermost layer
+*/
 int main ()
 {
+//------------------------------------------------------------------------------------------------------------------------------------
+//------------------------------------------------------FIRST PART OF THE CODE--------------------------------------------------------
+//------------------------------------------------------------------------------------------------------------------------------------
 	int Layer_Number;						//the number of the layers used
 	char model,ablation;						//il modello per il planetesimal e per l'ablazione/vaporizzazione
 	double dr,dden,dtemp,dpress,dxm;
@@ -18,6 +27,7 @@ int main ()
 	double rdep;
 	double looppoint;
 	int counter;
+	double impact;
 
 	double depint=0;
 	double fgravx, fdragx;
@@ -32,7 +42,7 @@ int main ()
 	double rockm=0;
 	ifstream in("Build.dat");					//file for the initial parameter
 	ofstream out;							//files for the output
-	out.open("WaterMelting.dat", ios::out);
+	out.open("Trajectory.dat", ios::out);
 	
 	
 
@@ -52,14 +62,20 @@ int main ()
 		cout<<"layer number "<<104-a<<endl;
 		atmosphere[a].print();
 	}
-		
-	Starting_Point initial(corem,v0,pow(10,11),fp,rmax,atem);	//object of the class initial, it contains all the information of the initial status of the calculation
-	Planetesimal Halley(rirat,model,size,initial.getvx(),-0.1,sqrt(pow(initial.getvx(),2)+0.1*0.1),-(sqrt(pow(rmax,2)-pow(initial.getimp(),2))),initial.getimp(),rmax);						//object of the class planetesimal
+do{		
+//	Starting_Point initial(corem,v0,pow(10,11),fp,rmax,atem);	//object of the class initial, it contains all the information of the initial status of the calculation
+	Starting_Point initial(corem,v0,impact,fp,rmax,atem);
+	Planetesimal Halley(rirat,model,size,initial.getvx(),-0.1,sqrt(pow(initial.getvx(),2)+0.1*0.1),-rmax,initial.getimp(),sqrt(impact*impact+rmax*rmax));						//object of the class planetesimal
+	looppoint=rmax;					
+	
 	in.close();
+//------------------------------------------------------------------------------------------------------------------------------------
+//------------------------------------------------------SECOND PART OF THE CODE--------------------------------------------------------
+//------------------------------------------------------------------------------------------------------------------------------------
 
-	looppoint=rmax;
 
-	for(int c=1;c<1000000000000000;c++)					//the principal for cycle, where we calculate the ablation and the equation of motion
+
+	for(int c=1;c<1000000000000000000;c++)					//the principal for cycle, where we calculate the ablation and the equation of motion
 	{
 	int i=Layer_Number-1;
 	while(atmosphere[i].getr()<Halley.getr())			//here i calculate where is the planetesimal, in which layer
@@ -99,18 +115,26 @@ int main ()
 	atmosphere[i+1].print();
 	cout<<"and"<<endl;				
 	atmosphere[i].print();
-		fgravx=initial.getfgrav0()*Halley.getx()/pow(Halley.getx()*Halley.getx()+Halley.gety()*Halley.gety(),1.5);
+/*
+	fgravx=initial.getfgrav0()*Halley.getx()/pow(Halley.getx()*Halley.getx()+Halley.gety()*Halley.gety(),1.5);
 	fdragx=-Drag(Halley,local,initial.getrmax())*abs(Halley.getx())/sqrt(Halley.getx()*Halley.getx()+Halley.gety()*Halley.gety())*Halley.getvx()/(abs(Halley.getvx())*Halley.getmass());
 
 	fgravy=initial.getfgrav0()*Halley.gety()/pow(Halley.getx()*Halley.getx()+Halley.gety()*Halley.gety(),1.5);
 	fdragy=-Drag(Halley,local,initial.getrmax())*abs(Halley.gety())/sqrt(Halley.getx()*Halley.getx()+Halley.gety()*Halley.gety	())*Halley.getvy()/(abs(Halley.getvy())*Halley.getmass());
+*/
+
+
+//------------------------------------------------------------------------------------------------------------------------------------
+//------------------------------------------------------THIRD PART OF THE CODE--------------------------------------------------------
+//------------------------------------------------------------------------------------------------------------------------------------
 	
 	//now i solve the equation of motion, so I calculate the drag force and than i solve the equation of motion
 	fdrag=Drag(Halley,local,initial.getrmax());
 	SolveEqMotion.sett(Time_Step(initial, Halley));	
-	SolveEqMotion.Solve(Halley,local,initial,abs(atmosphere[i+1].getr()-atmosphere[i].getr()),counter);
-	cout<<"il contatore qua e "<<endl;
-	out<<SolveEqMotion.Solve(Halley,local,initial,1/100000*abs(atmosphere[i+1].getr()-atmosphere[i].getr()),counter)<<endl;
+	SolveEqMotion.Solve(Halley,local,initial,0.1*abs(atmosphere[i+1].getr()-atmosphere[i].getr()),counter);
+	cout<<"il contatore qua e "<<counter<<endl;
+	//out<<counter<<endl;
+	
 	
 	cout<<"before solving the equation of motion x is "<<Halley.getx()<<endl;
 	cout<<" and y is "<<Halley.gety()<<endl;
@@ -128,6 +152,7 @@ int main ()
 	Halley.setv();
 	
 	newr=Halley.getr();
+	//now i check if we are stuck in a loop
 	if(c%2!=0)
 	{
 		difference1=newr-oldr;
@@ -137,32 +162,32 @@ int main ()
 		difference2=newr-oldr;
 	}
 	ratio=difference2/difference1;
+	//done
 	
 
-	cout<<"after solving the equation of motion x is "<<Halley.getx()<<endl;
-	cout<<" and y is "<<Halley.gety()<<endl;
 	
-	cout<<"after solving the equation of motion vx is "<<Halley.getvx()<<" and vy is "<<Halley.getvy()<<endl;
-	cout<<"il percorso lungo l'asse x e "<<SolveEqMotion.getdx()<<" e lungo l asse y e "<<SolveEqMotion.getdy()<<endl;
 	edep=fdrag*SolveEqMotion.getds();
 	//now that i solved the equation of motion i calculate the ablation of the planetesimal
-	cout<<"the old size is "<<Halley.getsize()<<endl;
-	Halley.setsize(Halley.getsize()+Ablate(Halley,local,Time_Step(initial, Halley),ablation,rmax));
-	cout<<"the new size is "<<Halley.getsize()<<endl;
+	Halley.setsize(Halley.getsize()+Ablate(Halley,local,SolveEqMotion.gett(),ablation,rmax));
 	rockm=rockm+Halley.deltam(SolveEqMotion.getds())*Halley.getrirat()/(1+Halley.getrirat());
+	
 	if(local.gett()>2.3*pow(10,3))
 	{
 		edep=edep-8.08*pow(10,10)*rockm;
           	rockm=0.;
 	}
 	edep=edep-Halley.deltam(SolveEqMotion.getds())*Halley.getE0()/(1.+Halley.getrirat())+rockm*(local.mg()/Halley.getr()-local.mg()/oldr);
-	//now i see if the planetesimal bork up, reached the core, or is completely ablated and i exit from the program. Otherwise we stay in the for cycle
+
+//------------------------------------------------------------------------------------------------------------------------------------
+//------------------------------------------------------FOURTH PART OF THE CODE--------------------------------------------------------
+//------------------------------------------------------------------------------------------------------------------------------------
+
 	if(Halley.getsize()<=0)
 	{
 		cout<<"The planetesimal is ablated, congrats"<<endl;
 		return 0;
 	}
-	time=time+Time_Step(initial, Halley);
+	time=time+SolveEqMotion.gett();
 	if(ratio<0)
 	{
 		
@@ -195,15 +220,15 @@ int main ()
 		return 0;
 	}
 
-	//out<<Halley.getr()<<" "<<Halley.getsize()<<" "<<Energy(Halley,local)<<endl;
+	//out<<Halley.getr()<<" "<<Halley.getsize()<<endl;
 	//out<<fgravx<<" "<<fdragx<<" "<<fgravy<<" "<<fdragy<<endl;
 	//out<<Energy(Halley,local)<<endl;
 	//out<<fgravx/fdragx<<" "<<fgravy/fdragy<<endl;
-	//out<<Halley.getx()<<" "<<Halley.gety()<<endl;
+	out<<Halley.getx()<<" "<<Halley.gety()<<endl;
 
 	}
-		
-		
+	impact=impact+1*pow(10,11);	
+	}while(impact<pow(10,14));
 		
 
 	

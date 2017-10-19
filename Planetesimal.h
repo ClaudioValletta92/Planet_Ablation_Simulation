@@ -105,13 +105,14 @@ class Runge_Kutta{
 	Runge_Kutta(double t,double x,double y,double vx,double vy);
 	double Planetesimal_Gravitationalplusdrag_Equation_xaxe(Planetesimal Halley, Layer boh, Starting_Point Initial,double x, double y, 									double vx, double vy,double vx1, double vy1);
 	double Planetesimal_Gravitationalplusdrag_Equation_yaxe(Planetesimal Halley, Layer boh, Starting_Point Initial, double x, double y, 									double vx, double vy,double vx1, double vy1);
-	int Solve(Planetesimal Halley, Layer boh, Starting_Point Initial, double precision,int counter);
+	void Solve(Planetesimal Halley, Layer boh, Starting_Point Initial, double precision,int& counter);
 	double getdx();
 	double getdy();
 	double getdvx();
 	double getdvy();
 	double getds();
 	double getdv();
+	double gett();
 	void sett(double t);
 	private:
 	double m_t, m_dx, m_dy, m_dvx, m_dvy;

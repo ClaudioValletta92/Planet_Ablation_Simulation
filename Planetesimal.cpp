@@ -390,7 +390,7 @@ double Drag(Planetesimal Halley, Layer boh,double radmax){
         	dkn=1./(Halley.getsize()*fpi); 
         	psi=1.+dkn*(1.25+.42*exp(-.87/dkn)); 
         	f=18.85*boh.Visc()*Halley.getv()*Halley.getsize()/psi; 
-		cout<<"forza drag "<<f<<endl;
+		
 
 		
 		return f;
@@ -421,7 +421,7 @@ Runge_Kutta::Runge_Kutta(double t, double x,double y,double vx, double vy){
 }	
 double Runge_Kutta::Planetesimal_Gravitationalplusdrag_Equation_xaxe(Planetesimal Halley, Layer boh, Starting_Point Initial,double x,double 									     y, double vx, double vy, double vx1, double vy1)
 {
-	cout<<" la prima parte della forza è "<<Halley.getmass()*Initial.getfgrav0()*x/pow(x*x+y*y,1.5)<<" la seconda "<<-Halley.getmass()*Drag(Halley,boh,Initial.getrmax())*abs(x)/sqrt(x*x+y*y)*vx/(abs(vx)*Halley.getmass())<<endl;
+	
 	
 	
 	return Initial.getfgrav0()*x/pow(x*x+y*y,1.5)-Drag(Halley,boh,Initial.getrmax())/(vx1*vx1+vy1*vy1)*abs(x)*(vx*vx+vy*vy)/sqrt(x*x+y*y)*vx/(abs(vx)*Halley.getmass());
@@ -435,7 +435,7 @@ double Runge_Kutta::Planetesimal_Gravitationalplusdrag_Equation_yaxe(Planetesima
 	
 	return Initial.getfgrav0()*y/pow(x*x+y*y,1.5)-Drag(Halley,boh,Initial.getrmax())/(vx1*vx1+vy1*vy1)*(vx*vx+vy*vy)*abs(y)/sqrt(x*x+y*y)*vy/(abs(vy)*Halley.getmass());
 }
-int Runge_Kutta::Solve(Planetesimal Halley, Layer boh, Starting_Point Initial,double precision,int counter){
+void Runge_Kutta::Solve(Planetesimal Halley, Layer boh, Starting_Point Initial,double precision,int& counter){
 	double x0,x1,x2,x3,x4=0;
 	double vx0,vx1,vx2,vx3,vx4=0;
 	double y0,y1,y2,y3,y4=0;
@@ -451,42 +451,55 @@ int Runge_Kutta::Solve(Planetesimal Halley, Layer boh, Starting_Point Initial,do
 	vx0=Halley.getvx();
 	vy0=Halley.getvy();
 	y0=Halley.gety();
-	cout<<"xo "<<x0<<" yo "<<y0<<" vxo "<<vx0<<"vyo "<<vy0<<endl; 
+	
 	vx1=m_t*Planetesimal_Gravitationalplusdrag_Equation_xaxe(Halley,boh,Initial,x0,y0,vx0,vy0,vx0,vy0);
         vy1=m_t*Planetesimal_Gravitationalplusdrag_Equation_yaxe(Halley,boh,Initial,x0,y0,vx0,vy0,vx0,vy0);
 	x1=m_t*vx0;
 	y1=m_t*vy0;   
-	cout<<"x1 "<<x1<<" y1 "<<y1<<" vx1 "<<vx1<<" vy1 "<<vy1<<endl; 
+	
 	vx2=m_t*Planetesimal_Gravitationalplusdrag_Equation_xaxe(Halley,boh,Initial,x0+x1/2.,y0+y1/2.,vx0+vx1/2.,vy0+vy1/2.,vx0,vy0);
         vy2=m_t*Planetesimal_Gravitationalplusdrag_Equation_yaxe(Halley,boh,Initial,x0+x1/2.,y0+y1/2.,vx0+vx1/2.,vy0+vy1/2.,vx0,vy0);
      	x2=m_t*(vx0+vx1/2.);
         y2=m_t*(vy0+vy1/2.);
-	cout<<"x2 "<<x2<<" y2 "<<y2<<" vx2 "<<vx2<<" vy2 "<<vy2<<endl;
+	
         vx3=m_t*Planetesimal_Gravitationalplusdrag_Equation_xaxe(Halley,boh,Initial,x0+x2/2.,y0+y2/2.,vx0+vx2/2.,vy0+vy2/2.,vx0,vy0);
         vy3=m_t*Planetesimal_Gravitationalplusdrag_Equation_yaxe(Halley,boh,Initial,x0+x2/2.,y0+y2/2.,vx0+vx2/2.,vy0+vy2/2.,vx0,vy0);
 	x3=m_t*(vx0+vx2/2.);
         y3=m_t*(vy0+vy2/2.);
+
   	vx4=m_t*Planetesimal_Gravitationalplusdrag_Equation_xaxe(Halley,boh,Initial,x0+x3,y0+y3,vx0+vx3,vy0+vy3,vx0,vy0);
         vy4=m_t*Planetesimal_Gravitationalplusdrag_Equation_yaxe(Halley,boh,Initial,x0+x3,y0+y3,vx0+vx3,vy0+vy3,vx0,vy0);
  	x4=m_t*(vx0+vx3);
 	y4=m_t*(vy0+vy3);
+
 	dxdouble=(x1+2.*x2+2.*x3+x4)/6; 
        	dydouble=(y1+2.*y2+2.*y3+y4)/6;
   	dvxdouble=(vx1+2.*vx2+2.*vx3+vx4)/6; 
        	dvydouble=(vy1+2.*vy2+2.*vy3+vy4)/6;
 
+	if(Halley.getr()>Initial.getrmax())
+	{
+		m_dx=dxdouble; 
+       		m_dy=dydouble;
+  		m_dvx=dvxdouble; 
+       		m_dvy=dvydouble;
+		cout<<"il pianeta e piu su dell atmosfera non sto ad adattare rungekutta direi"<<endl;
+		counter++;
+		break;
+	}
+	
 	//ora ho rifaccio con la metà del passo 
 	
 	vx1=m_t/2.*Planetesimal_Gravitationalplusdrag_Equation_xaxe(Halley,boh,Initial,x0,y0,vx0,vy0,vx0,vy0);
         vy1=m_t/2.*Planetesimal_Gravitationalplusdrag_Equation_yaxe(Halley,boh,Initial,x0,y0,vx0,vy0,vx0,vy0);
 	x1=m_t/2.*vx0;
 	y1=m_t/2.*vy0;   
-	cout<<"x1 "<<x1<<" y1 "<<y1<<" vx1 "<<vx1<<" vy1 "<<vy1<<endl; 
+	
 	vx2=m_t/2.*Planetesimal_Gravitationalplusdrag_Equation_xaxe(Halley,boh,Initial,x0+x1/2.,y0+y1/2.,vx0+vx1/2.,vy0+vy1/2.,vx0,vy0);
         vy2=m_t/2.*Planetesimal_Gravitationalplusdrag_Equation_yaxe(Halley,boh,Initial,x0+x1/2.,y0+y1/2.,vx0+vx1/2.,vy0+vy1/2.,vx0,vy0);
      	x2=m_t/2.*(vx0+vx1/2.);
         y2=m_t/2.*(vy0+vy1/2.);
-	cout<<"x2 "<<x2<<" y2 "<<y2<<" vx2 "<<vx2<<" vy2 "<<vy2<<endl;
+	
         vx3=m_t/2.*Planetesimal_Gravitationalplusdrag_Equation_xaxe(Halley,boh,Initial,x0+x2/2.,y0+y2/2.,vx0+vx2/2.,vy0+vy2/2.,vx0,vy0);
         vy3=m_t/2.*Planetesimal_Gravitationalplusdrag_Equation_yaxe(Halley,boh,Initial,x0+x2/2.,y0+y2/2.,vx0+vx2/2.,vy0+vy2/2.,vx0,vy0);
 	x3=m_t/2.*(vx0+vx2/2.);
@@ -510,12 +523,12 @@ int Runge_Kutta::Solve(Planetesimal Halley, Layer boh, Starting_Point Initial,do
         vy1=m_t/2.*Planetesimal_Gravitationalplusdrag_Equation_yaxe(Halley,boh,Initial,x0,y0,vx0,vy0,vx0,vy0);
 	x1=m_t/2.*vx0;
 	y1=m_t/2.*vy0;   
-	cout<<"x1 "<<x1<<" y1 "<<y1<<" vx1 "<<vx1<<" vy1 "<<vy1<<endl; 
+	
 	vx2=m_t/2.*Planetesimal_Gravitationalplusdrag_Equation_xaxe(Halley,boh,Initial,x0+x1/2.,y0+y1/2.,vx0+vx1/2.,vy0+vy1/2.,vx0,vy0);
         vy2=m_t/2.*Planetesimal_Gravitationalplusdrag_Equation_yaxe(Halley,boh,Initial,x0+x1/2.,y0+y1/2.,vx0+vx1/2.,vy0+vy1/2.,vx0,vy0);
      	x2=m_t/2.*(vx0+vx1/2.);
         y2=m_t/2.*(vy0+vy1/2.);
-	cout<<"x2 "<<x2<<" y2 "<<y2<<" vx2 "<<vx2<<" vy2 "<<vy2<<endl;
+	
         vx3=m_t/2.*Planetesimal_Gravitationalplusdrag_Equation_xaxe(Halley,boh,Initial,x0+x2/2.,y0+y2/2.,vx0+vx2/2.,vy0+vy2/2.,vx0,vy0);
         vy3=m_t/2.*Planetesimal_Gravitationalplusdrag_Equation_yaxe(Halley,boh,Initial,x0+x2/2.,y0+y2/2.,vx0+vx2/2.,vy0+vy2/2.,vx0,vy0);
 	x3=m_t/2.*(vx0+vx2/2.);
@@ -528,9 +541,9 @@ int Runge_Kutta::Solve(Planetesimal Halley, Layer boh, Starting_Point Initial,do
        	dy2=(y1+2.*y2+2.*y3+y4)/6;
   	dvx2=(vx1+2.*vx2+2.*vx3+vx4)/6; 
        	dvy2=(vy1+2.*vy2+2.*vy3+vy4)/6;
-	cout<<"sono quiiiii"<<endl;
+
 	counter++;
-	cout<<counter<<endl;
+
 	dxnormal=dx1+dx2;
 	dynormal=dy1+dy2;
 	if(abs(sqrt(dxdouble*dxdouble+dydouble*dydouble)-sqrt(dxnormal*dxnormal+dynormal*dynormal))/15.>precision)
@@ -552,7 +565,7 @@ int Runge_Kutta::Solve(Planetesimal Halley, Layer boh, Starting_Point Initial,do
   	m_dvx=dvxdouble; 
        	m_dvy=dvydouble;
 
-return counter;
+
 }
 
 double Runge_Kutta::getdx(){
@@ -572,6 +585,9 @@ double Runge_Kutta::getds(){
 }
 double Runge_Kutta::getdv(){
 	return sqrt(pow(m_dvx,2)+pow(m_dvy,2));
+}
+double Runge_Kutta::gett(){
+	return m_t;
 }
 double Ablate(Planetesimal Halley, Layer boh, double t,char model,double rmax){
 	double Esput,Eabl,con,energy,tlow,thigh,T,pvap,evap,R;	
