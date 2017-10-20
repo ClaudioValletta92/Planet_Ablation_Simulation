@@ -319,7 +319,8 @@ double Starting_Point::getsemia(){
 }
 double Starting_Point::getvx(){
 	
-	return sqrt(m_v0*m_v0+2.*getmg0()/m_rmax);
+	//return sqrt(m_v0*m_v0+2.*getmg0()/m_rmax);
+	return m_v0;
 	
 }
 double Starting_Point::getfgrav0(){
@@ -592,10 +593,11 @@ double Runge_Kutta::gett(){
 double Ablate(Planetesimal Halley, Layer boh, double t,char model,double rmax){
 	double Esput,Eabl,con,energy,tlow,thigh,T,pvap,evap,R;	
 	
+	
 	double Q=0.5*dk(Halley,boh);
 	if(Halley.getr()>rmax)
 	{
-		Q=0;
+		return 0;
 		
 	}
 	double Eint=5.67*pow(10,-5)*pow(boh.gett(),4);
@@ -622,6 +624,7 @@ double Ablate(Planetesimal Halley, Layer boh, double t,char model,double rmax){
 	thigh=7.*pow(10,4);
 	do
 	{
+	
 		T=sqrt(tlow*thigh);
 		if (Halley.getmodel()=='W') 
 			{

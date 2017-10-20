@@ -44,7 +44,7 @@ int main ()
 	ofstream out;							//files for the output
 	out.open("Trajectory.dat", ios::out);
 	
-	
+	impact=1.0651*pow(10,13);
 
 	in>>Layer_Number;
 	Layer *atmosphere= new Layer[Layer_Number]();			//array of object of the class atmosphere
@@ -62,10 +62,10 @@ int main ()
 		cout<<"layer number "<<104-a<<endl;
 		atmosphere[a].print();
 	}
-do{		
+		
 //	Starting_Point initial(corem,v0,pow(10,11),fp,rmax,atem);	//object of the class initial, it contains all the information of the initial status of the calculation
 	Starting_Point initial(corem,v0,impact,fp,rmax,atem);
-	Planetesimal Halley(rirat,model,size,initial.getvx(),-0.1,sqrt(pow(initial.getvx(),2)+0.1*0.1),-rmax,initial.getimp(),sqrt(impact*impact+rmax*rmax));						//object of the class planetesimal
+	Planetesimal Halley(rirat,model,size,initial.getvx(),-0.1,sqrt(pow(initial.getvx(),2)+0.1*0.1),-10*rmax,initial.getimp(),sqrt(impact*impact+10*10*rmax*rmax));						//object of the class planetesimal
 	looppoint=rmax;					
 	
 	in.close();
@@ -75,7 +75,7 @@ do{
 
 
 
-	for(int c=1;c<1000000000000000000;c++)					//the principal for cycle, where we calculate the ablation and the equation of motion
+	for(int c=1;c<1000000000;c++)					//the principal for cycle, where we calculate the ablation and the equation of motion
 	{
 	int i=Layer_Number-1;
 	while(atmosphere[i].getr()<Halley.getr())			//here i calculate where is the planetesimal, in which layer
@@ -150,6 +150,7 @@ do{
 	Halley.setvy(newvy);
 	Halley.setr();
 	Halley.setv();
+	
 	
 	newr=Halley.getr();
 	//now i check if we are stuck in a loop
@@ -227,8 +228,8 @@ do{
 	out<<Halley.getx()<<" "<<Halley.gety()<<endl;
 
 	}
-	impact=impact+1*pow(10,11);	
-	}while(impact<pow(10,14));
+		
+	
 		
 
 	
